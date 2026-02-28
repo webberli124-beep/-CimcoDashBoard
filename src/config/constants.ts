@@ -1,0 +1,62 @@
+import type { MachineStatus } from "@/types/dashboard";
+
+export const STATUS_COLORS: Record<
+  MachineStatus,
+  { bg: string; border: string; text: string; glow: string }
+> = {
+  green: {
+    bg: "#064E3B",
+    border: "#10B981",
+    text: "#6EE7B7",
+    glow: "0 0 12px rgba(16,185,129,0.3)",
+  },
+  yellow: {
+    bg: "#78350F",
+    border: "#F59E0B",
+    text: "#FDE68A",
+    glow: "0 0 12px rgba(245,158,11,0.3)",
+  },
+  red: {
+    bg: "#7F1D1D",
+    border: "#EF4444",
+    text: "#FCA5A5",
+    glow: "0 0 12px rgba(239,68,68,0.3)",
+  },
+};
+
+export const STATUS_SORT_WEIGHT: Record<MachineStatus, number> = {
+  red: 0,
+  yellow: 1,
+  green: 2,
+};
+
+export const DEFAULT_SETTINGS = {
+  refreshInterval: 30,
+  greenThreshold: 100,
+  yellowThreshold: 80,
+  shiftStart: "08:00",
+  shiftEnd: "16:00",
+  shiftName: "Day Shift",
+  tvMode: false,
+} as const;
+
+export const REFRESH_OPTIONS = [15, 30, 60, 120] as const;
+export const GREEN_THRESHOLD_OPTIONS = [90, 95, 100] as const;
+export const YELLOW_THRESHOLD_OPTIONS = [70, 75, 80, 85] as const;
+
+export function getStatus(
+  actual: number,
+  target: number,
+  greenThreshold = 100,
+  yellowThreshold = 80
+): MachineStatus {
+  if (target <= 0) return "green";
+  const pct = (actual / target) * 100;
+  if (pct >= greenThreshold) return "green";
+  if (pct >= yellowThreshold) return "yellow";
+  return "red";
+}
+
+export function getPct(actual: number, target: number): number {
+  return target > 0 ? Math.round((actual / target) * 100) : 0;
+}

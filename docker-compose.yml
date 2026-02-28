@@ -1,0 +1,47 @@
+version: "3.8"
+
+# CIMCO MDC Dashboard — Docker Compose
+# Connects to an EXISTING MariaDB (CIMCO MDC production database).
+# This dashboard is READ-ONLY — it only performs SELECT queries.
+
+services:
+  # ── Frontend (nginx serving static files) ──
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: frontend
+      args:
+        VITE_USE_MOCK: "false"
+    ports:
+      - "${FRONTEND_PORT:-80}:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+    networks:
+      - app-network
+
+  # ── Backend API (Express — READ-ONLY queries to MariaDB) ──
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: backend
+    ports:
+      - "${SERVER_PORT:-3002}:3002"
+    environment:
+      - DB_HOST=${DB_HOST:-host.docker.internal}
+      - DB_PORT=${DB_PORT:-3306}
+      - DB_USER=${DB_USER:-root}
+      - DB_PASSWORD=${DB_PASSWORD:-cimco123}
+      - DB_NAME=${DB_NAME:-MDC}
+      - SERVER_PORT=3002
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
