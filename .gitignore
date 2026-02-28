@@ -15,8 +15,8 @@ dist-ssr
 
 # Build / pack output
 _build
-cimco-dashboard-lite.zip
-cimco-dashboard-full.zip
+*.zip
+!install_package/*.zip
 server/dist
 
 # Editor directories and files

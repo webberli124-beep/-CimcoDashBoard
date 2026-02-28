@@ -97,8 +97,11 @@ echo.
 :: ══════════════════════════════════════════════
 echo [5/8] Creating cimco-dashboard-lite.zip...
 
+set "OUT_DIR=%BASE_DIR%\install_package"
+if not exist "%OUT_DIR%" mkdir "%OUT_DIR%"
+
 set "LITE_ZIP=cimco-dashboard-lite.zip"
-set "LITE_ZIP_ABS=%BASE_DIR%\%LITE_ZIP%"
+set "LITE_ZIP_ABS=%OUT_DIR%\%LITE_ZIP%"
 if exist "%LITE_ZIP_ABS%" del /q "%LITE_ZIP_ABS%"
 
 :: ZIP the parent dir so archive contains cimco-dashboard\ folder
@@ -166,7 +169,7 @@ echo.
 echo [7/8] Creating cimco-dashboard-full.zip...
 
 set "FULL_ZIP=cimco-dashboard-full.zip"
-set "FULL_ZIP_ABS=%BASE_DIR%\%FULL_ZIP%"
+set "FULL_ZIP_ABS=%OUT_DIR%\%FULL_ZIP%"
 if exist "%FULL_ZIP_ABS%" del /q "%FULL_ZIP_ABS%"
 
 powershell -NoProfile -Command "Add-Type -AssemblyName System.IO.Compression.FileSystem; [System.IO.Compression.ZipFile]::CreateFromDirectory('%BUILD_FULL%', '%FULL_ZIP_ABS%', 'Optimal', $true)"
@@ -187,12 +190,13 @@ rd /s /q "_build" >nul 2>&1
 echo.
 echo ============================================
 echo   Packages created successfully!
+echo   Output: install_package\
 echo.
-if exist "%LITE_ZIP%" (
-    for %%F in ("%LITE_ZIP%") do echo   Lite:  %LITE_ZIP%  (%%~zF bytes^)
+if exist "%LITE_ZIP_ABS%" (
+    for %%F in ("%LITE_ZIP_ABS%") do echo   Lite:  %LITE_ZIP%  (%%~zF bytes^)
 )
-if exist "%FULL_ZIP%" (
-    for %%F in ("%FULL_ZIP%") do echo   Full:  %FULL_ZIP%  (%%~zF bytes^)
+if exist "%FULL_ZIP_ABS%" (
+    for %%F in ("%FULL_ZIP_ABS%") do echo   Full:  %FULL_ZIP%  (%%~zF bytes^)
 )
 echo.
 echo   Lite: no Node.js, client needs system install
