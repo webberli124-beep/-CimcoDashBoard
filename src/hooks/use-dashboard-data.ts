@@ -5,7 +5,7 @@ import type { ApiErrorDetail } from "@/services/api";
 import { getStatus, STATUS_SORT_WEIGHT } from "@/config/constants";
 
 export function useDashboardData(settings: DashboardSettings) {
-  const [machines, setMachines] = useState<MachineData[]>([]);
+  const [rawMachines, setRawMachines] = useState<MachineData[]>([]);
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<ApiErrorDetail | null>(null);
@@ -13,35 +13,18 @@ export function useDashboardData(settings: DashboardSettings) {
 
   const dismissError = useCallback(() => setError(null), []);
 
-  // Only depend on the settings fields that actually affect data fetching / status computation
   const { shiftStart, shiftEnd, greenThreshold, yellowThreshold, refreshInterval } = settings;
 
   const loadData = useCallback(async (): Promise<void> => {
     try {
-      let data = await fetchDashboardData({
+      const data = await fetchDashboardData({
         shiftStart,
         shiftEnd,
         greenThreshold,
         yellowThreshold,
       });
 
-      // Re-compute status based on current settings thresholds
-      data = data.map((m) => ({
-        ...m,
-        status: getStatus(
-          m.currentHour.actual,
-          m.currentHour.target,
-          greenThreshold,
-          yellowThreshold
-        ),
-      }));
-
-      // Sort: red → yellow → green
-      data.sort(
-        (a, b) => STATUS_SORT_WEIGHT[a.status] - STATUS_SORT_WEIGHT[b.status]
-      );
-
-      setMachines(data);
+      setRawMachines(data);
       setLastUpdated(new Date());
       setError(null);
     } catch (err) {
@@ -66,22 +49,44 @@ export function useDashboardData(settings: DashboardSettings) {
     loadData().catch(() => {});
   }, [loadData]);
 
-  // Auto-refresh interval — separate effect so refreshInterval changes only reset the timer
+  // Auto-refresh interval — use ref so interval only resets when refreshInterval changes
+  const loadDataRef = useRef(loadData);
+  loadDataRef.current = loadData;
+
   useEffect(() => {
     if (intervalRef.current) clearInterval(intervalRef.current);
-    intervalRef.current = setInterval(() => { loadData().catch(() => {}); }, refreshInterval * 1000);
+    intervalRef.current = setInterval(() => { loadDataRef.current().catch(() => {}); }, refreshInterval * 1000);
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, [loadData, refreshInterval]);
+  }, [refreshInterval]);
 
-  const stats: DashboardStats = useMemo(() => ({
-    total: machines.length,
-    onTrack: machines.filter((m) => m.status === "green").length,
-    warning: machines.filter((m) => m.status === "yellow").length,
-    behind: machines.filter((m) => m.status === "red").length,
-    totalGap: machines.reduce((sum, m) => sum + m.currentHour.difference, 0),
-  }), [machines]);
+  // Re-compute status and sort when thresholds change (instant, no refetch)
+  const machines = useMemo(() => {
+    const data = rawMachines.map((m) => ({
+      ...m,
+      status: getStatus(
+        m.currentHour.actual,
+        m.currentHour.target,
+        greenThreshold,
+        yellowThreshold
+      ),
+    }));
+    data.sort((a, b) => STATUS_SORT_WEIGHT[a.status] - STATUS_SORT_WEIGHT[b.status]);
+    return data;
+  }, [rawMachines, greenThreshold, yellowThreshold]);
+
+  // Compute stats in a single pass
+  const stats: DashboardStats = useMemo(() => {
+    let onTrack = 0, warning = 0, behind = 0, totalGap = 0;
+    for (const m of machines) {
+      if (m.status === "green") onTrack++;
+      else if (m.status === "yellow") warning++;
+      else behind++;
+      totalGap += m.currentHour.difference;
+    }
+    return { total: machines.length, onTrack, warning, behind, totalGap };
+  }, [machines]);
 
   return { machines, stats, lastUpdated, loading, error, dismissError, refresh: loadData };
 }

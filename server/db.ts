@@ -1,35 +1,48 @@
 import mysql from "mysql2/promise";
-import dotenv from "dotenv";
 import { log } from "./logger.js";
-
-dotenv.config();
 
 /**
  * READ-ONLY connection pool to the existing CIMCO MDC MariaDB database.
  * This dashboard only performs SELECT queries — no data is written.
+ *
+ * Pool is lazily initialized after dotenv.config() has loaded env vars.
  *
  * For extra safety, consider creating a read-only DB user:
  *   CREATE USER 'dashboard'@'%' IDENTIFIED BY 'xxx';
  *   GRANT SELECT ON MDC.valtb_hourly_dashboard TO 'dashboard'@'%';
  *   FLUSH PRIVILEGES;
  */
-const pool = mysql.createPool({
-  host: process.env.DB_HOST || "localhost",
-  port: Number(process.env.DB_PORT) || 3306,
-  user: process.env.DB_USER || "root",
-  password: process.env.DB_PASSWORD || "",
-  database: process.env.DB_NAME || "MDC",
-  waitForConnections: true,
-  connectionLimit: 10,
-  queueLimit: 0,
-});
+let _pool: mysql.Pool | null = null;
+
+export function getPool(): mysql.Pool {
+  if (!_pool) {
+    _pool = mysql.createPool({
+      host: process.env.DB_HOST || "localhost",
+      port: Number(process.env.DB_PORT) || 3306,
+      user: process.env.DB_USER || "root",
+      password: process.env.DB_PASSWORD || "",
+      database: process.env.DB_NAME || "MDC",
+      waitForConnections: true,
+      connectionLimit: 10,
+      queueLimit: 50,
+    });
+  }
+  return _pool;
+}
+
+export async function closePool(): Promise<void> {
+  if (_pool) {
+    await _pool.end();
+    _pool = null;
+  }
+}
 
 /**
  * Test database connectivity by running `SELECT 1`.
  * Throws on failure so the caller can decide whether to exit.
  */
 export async function testConnection(): Promise<void> {
-  const conn = await pool.getConnection();
+  const conn = await getPool().getConnection();
   try {
     await conn.query("SELECT 1");
     log.info("Database connected", {
@@ -107,11 +120,9 @@ export function classifyDbError(err: unknown): DbErrorDetail {
       }
       return {
         code: "DB_ERROR",
-        message: `Database error: ${(err as Error).message ?? "Unknown error"}`,
+        message: "An unexpected database error occurred",
         suggestion: "Check server logs for details.",
         httpStatus: 500,
       };
   }
 }
-
-export default pool;

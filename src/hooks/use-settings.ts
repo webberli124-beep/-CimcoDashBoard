@@ -8,7 +8,17 @@ function loadSettings(): DashboardSettings {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
-      return { ...DEFAULT_SETTINGS, ...JSON.parse(raw) };
+      const parsed = JSON.parse(raw);
+      if (typeof parsed === "object" && parsed !== null) {
+        // Validate each field type matches the default
+        const result = { ...DEFAULT_SETTINGS };
+        for (const key of Object.keys(DEFAULT_SETTINGS) as Array<keyof DashboardSettings>) {
+          if (key in parsed && typeof parsed[key] === typeof DEFAULT_SETTINGS[key]) {
+            (result as Record<string, unknown>)[key] = parsed[key];
+          }
+        }
+        return result;
+      }
     }
   } catch {
     // ignore parse errors

@@ -3,6 +3,24 @@ import { Button } from "@/components/ui/button";
 import type { DashboardStats } from "@/types/dashboard";
 import { useClock } from "@/hooks/use-clock";
 
+function ClockSection({ lastUpdated, refreshInterval, isTV }: { lastUpdated: Date; refreshInterval: number; isTV: boolean }) {
+  const { time } = useClock();
+  const secondsAgo = Math.floor((Date.now() - lastUpdated.getTime()) / 1000);
+  return (
+    <div className="text-right">
+      <div
+        className="font-mono font-extrabold"
+        style={{ fontSize: isTV ? "24px" : "16px", color: "#E2E8F0" }}
+      >
+        {time}
+      </div>
+      <div style={{ fontSize: "10px", color: "#475569" }}>
+        Updated {secondsAgo}s ago · {refreshInterval}s
+      </div>
+    </div>
+  );
+}
+
 interface StatusBarProps {
   stats: DashboardStats;
   shiftName: string;
@@ -22,11 +40,6 @@ export function StatusBar({
   isTV = false,
   onOpenSettings,
 }: StatusBarProps) {
-  const { time } = useClock();
-
-  const secondsAgo = Math.floor(
-    (Date.now() - lastUpdated.getTime()) / 1000
-  );
 
   const badges = [
     { label: "On Track", count: stats.onTrack, color: "#10B981" },
@@ -126,20 +139,7 @@ export function StatusBar({
 
         {/* Right: time + settings */}
         <div className="flex items-center gap-2 shrink-0">
-          <div className="text-right">
-            <div
-              className="font-mono font-extrabold"
-              style={{
-                fontSize: isTV ? "24px" : "16px",
-                color: "#E2E8F0",
-              }}
-            >
-              {time}
-            </div>
-            <div style={{ fontSize: "10px", color: "#475569" }}>
-              Updated {secondsAgo}s ago · {refreshInterval}s
-            </div>
-          </div>
+          <ClockSection lastUpdated={lastUpdated} refreshInterval={refreshInterval} isTV={isTV} />
           <Button
             variant="ghost"
             size="icon"

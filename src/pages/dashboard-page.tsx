@@ -21,7 +21,9 @@ export default function DashboardPage() {
   const [config, setConfig] = useState<AppConfig | null>(null);
 
   useEffect(() => {
-    fetchConfig().then(setConfig);
+    let cancelled = false;
+    fetchConfig().then((cfg) => { if (!cancelled) setConfig(cfg); });
+    return () => { cancelled = true; };
   }, []);
 
   // Always derive selectedMachine from latest machines data to avoid stale state
@@ -30,7 +32,7 @@ export default function DashboardPage() {
     [selectedMachineId, machines]
   );
 
-  const shiftTime = `${settings.shiftStart} – ${settings.shiftEnd}`;
+  const shiftTime = useMemo(() => `${settings.shiftStart} – ${settings.shiftEnd}`, [settings.shiftStart, settings.shiftEnd]);
 
   return (
     <DashboardLayout>

@@ -13,14 +13,22 @@ export const SparklineChart = memo(function SparklineChart({
   width = 140,
   height = 24,
 }: SparklineChartProps) {
-  if (data.length < 2) return null;
+  if (data.length === 0) return null;
+
+  // Use a fixed viewBox internally for coordinate calculation
+  const vw = 200;
+
+  if (data.length === 1) {
+    return (
+      <svg width={width} height={height} viewBox={`0 0 ${vw} ${height}`} preserveAspectRatio="none" className="block">
+        <circle cx={vw / 2} cy={height / 2} r="2.5" fill={color} />
+      </svg>
+    );
+  }
 
   const max = Math.max(...data);
   const min = Math.min(...data);
   const range = max - min || 1;
-
-  // Use a fixed viewBox internally for coordinate calculation
-  const vw = 200;
 
   const points = data
     .map(

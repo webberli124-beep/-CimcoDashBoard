@@ -15,7 +15,8 @@ export const ProgressRing = memo(function ProgressRing({
 }: ProgressRingProps) {
   const r = (size - strokeWidth) / 2;
   const circ = 2 * Math.PI * r;
-  const offset = circ - (Math.min(percentage, 100) / 100) * circ;
+  const clamped = Math.min(Math.max(percentage, 0), 100);
+  const offset = circ - (clamped / 100) * circ;
 
   return (
     <svg width={size} height={size} className="-rotate-90">

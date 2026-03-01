@@ -19,6 +19,9 @@ CREATE TABLE IF NOT EXISTS `valtb_hourly_dashboard` (
   INDEX idx_portid_time (`portid`, `starttime`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- Clear existing test data before re-seeding to avoid duplicates
+DELETE FROM `valtb_hourly_dashboard`;
+
 -- ── Generate test data for today's shift (08:00–16:00) ──
 -- Uses variables so data is always "today"
 

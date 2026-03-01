@@ -2,6 +2,10 @@ import { useMemo } from "react";
 import ReactECharts from "echarts-for-react";
 import type { HourlySlot } from "@/types/dashboard";
 
+function escapeHtml(str: string): string {
+  return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
 interface HourlyBarChartProps {
   slots: HourlySlot[];
   greenThreshold?: number;
@@ -48,7 +52,7 @@ export function HourlyBarChart({
           const actual = params[1]?.value ?? 0;
           const diff = actual - target;
           const diffColor = diff >= 0 ? "#10B981" : "#EF4444";
-          return `<b>${hour}</b><br/>
+          return `<b>${escapeHtml(hour)}</b><br/>
             Target: ${target}<br/>
             Actual: ${actual}<br/>
             <span style="color:${diffColor}">Diff: ${diff >= 0 ? "+" : ""}${diff}</span>`;

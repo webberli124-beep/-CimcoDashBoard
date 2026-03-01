@@ -1,5 +1,5 @@
 # ============================================
-# Stage 1: Build frontend
+# Stage 1: Build frontend + compile server
 # ============================================
 FROM node:22-alpine AS builder
 
@@ -14,12 +14,11 @@ RUN npm ci
 # Copy source code
 COPY . .
 
-# Build arguments for frontend env vars
-ARG VITE_USE_MOCK=false
-ENV VITE_USE_MOCK=$VITE_USE_MOCK
-
-# Build production bundle (includes legacy IE11 build)
+# Build production frontend bundle
 RUN npm run build
+
+# Compile server TypeScript to JavaScript
+RUN npx tsc -p server/tsconfig.json
 
 # ============================================
 # Stage 2: Production frontend (nginx)
@@ -52,12 +51,9 @@ COPY package.json package-lock.json ./
 # Install production dependencies only
 RUN npm ci --omit=dev
 
-# Copy server code
-COPY server/ ./server/
-
-# Install tsx for running TypeScript
-RUN npm install -g tsx
+# Copy compiled server from builder
+COPY --from=builder /app/server/dist ./server/dist/
 
 EXPOSE 3002
 
-CMD ["tsx", "server/index.ts"]
+CMD ["node", "server/dist/index.js"]

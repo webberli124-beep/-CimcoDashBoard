@@ -1,6 +1,6 @@
 import { Router } from "express";
 import type { RowDataPacket } from "mysql2";
-import pool, { classifyDbError } from "./db.js";
+import { getPool, classifyDbError } from "./db.js";
 import { log } from "./logger.js";
 
 /**
@@ -22,7 +22,15 @@ function loadMachineNames(): Record<string, string> {
   const envNames = process.env.MACHINE_NAMES;
   if (envNames) {
     try {
-      return JSON.parse(envNames);
+      const parsed = JSON.parse(envNames);
+      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+        const result: Record<string, string> = {};
+        for (const [key, value] of Object.entries(parsed)) {
+          result[key] = typeof value === "string" ? value : String(value);
+        }
+        return result;
+      }
+      log.warn("MACHINE_NAMES must be a JSON object, using defaults");
     } catch {
       log.warn("MACHINE_NAMES env var is not valid JSON, using defaults");
     }
@@ -95,7 +103,7 @@ router.get("/dashboard", async (req, res) => {
     const shiftEnd = (req.query.shiftEnd as string) || "16:00";
 
     // Validate HH:MM format
-    const timeRe = /^\d{1,2}:\d{2}$/;
+    const timeRe = /^([01]\d|2[0-3]):[0-5]\d$/;
     if (!timeRe.test(shiftStart) || !timeRe.test(shiftEnd)) {
       res.status(400).json({
         error: {
@@ -113,16 +121,23 @@ router.get("/dashboard", async (req, res) => {
     const yellowThreshold = Number.isFinite(yellowRaw) ? yellowRaw : 80;
 
     // Calculate today's shift boundaries as unix timestamps
-    const today = new Date();
+    const now = new Date();
     const [startH, startM] = shiftStart.split(":").map(Number);
     const [endH, endM] = shiftEnd.split(":").map(Number);
 
-    const shiftStartDate = new Date(today.getFullYear(), today.getMonth(), today.getDate(), startH, startM, 0);
-    let shiftEndDate = new Date(today.getFullYear(), today.getMonth(), today.getDate(), endH, endM, 0);
+    const shiftStartDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), startH, startM, 0);
+    let shiftEndDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), endH, endM, 0);
 
     // Handle cross-midnight shifts (e.g. 22:00 – 06:00): push end to next day
     if (shiftEndDate <= shiftStartDate) {
       shiftEndDate = new Date(shiftEndDate.getTime() + 24 * 60 * 60 * 1000);
+      // If past midnight but before shift end, the shift started yesterday
+      const nowMinutes = now.getHours() * 60 + now.getMinutes();
+      const endMinutes = endH * 60 + endM;
+      if (nowMinutes < endMinutes) {
+        shiftStartDate.setDate(shiftStartDate.getDate() - 1);
+        shiftEndDate.setDate(shiftEndDate.getDate() - 1);
+      }
     }
 
     const startUnix = Math.floor(shiftStartDate.getTime() / 1000);
@@ -132,7 +147,7 @@ router.get("/dashboard", async (req, res) => {
     // starttime is stored as a numeric string (unix timestamp).
     // Direct string comparison works for unix timestamps of the same digit length.
     // For optimal performance, consider adding a numeric index column.
-    const [rows] = await pool.query<HourlyRow[]>(
+    const [rows] = await getPool().query<HourlyRow[]>(
       `SELECT starttime, portid, column1, column2, column3
        FROM valtb_hourly_dashboard
        WHERE starttime >= ?
@@ -145,8 +160,12 @@ router.get("/dashboard", async (req, res) => {
     const machineMap = new Map<string, HourlyRow[]>();
     for (const row of rows) {
       const pid = String(row.portid);
-      if (!machineMap.has(pid)) machineMap.set(pid, []);
-      machineMap.get(pid)!.push(row);
+      let bucket = machineMap.get(pid);
+      if (!bucket) {
+        bucket = [];
+        machineMap.set(pid, bucket);
+      }
+      bucket.push(row);
     }
 
     // Transform into MachineData format

@@ -157,6 +157,23 @@ Do While Not envStream.AtEndOfStream
     End If
 Loop
 envStream.Close
+' Validate port is numeric and in range
+If Not IsNumeric(port) Then
+    WriteLog "[FAIL] Invalid SERVER_PORT: " & port
+    MsgBox "Invalid SERVER_PORT value in .env: " & port & vbCrLf & vbCrLf & _
+           "SERVER_PORT must be a number between 1 and 65535.", _
+           vbCritical, "CIMCO Dashboard - Error"
+    CleanupAndExit 1
+End If
+Dim portNum
+portNum = CLng(port)
+If portNum < 1 Or portNum > 65535 Then
+    WriteLog "[FAIL] SERVER_PORT out of range: " & port
+    MsgBox "SERVER_PORT out of range: " & port & vbCrLf & vbCrLf & _
+           "Must be between 1 and 65535.", _
+           vbCritical, "CIMCO Dashboard - Error"
+    CleanupAndExit 1
+End If
 WriteLog "  SERVER_PORT = " & port
 
 ' -- Step 7: Check port in use --
@@ -224,12 +241,6 @@ Sub WriteLog(msg)
     logStream.WriteLine FormatDateTime(Now, 0) & "  " & msg
     On Error GoTo 0
 End Sub
-
-Function FormatDate(d)
-    FormatDate = Year(d) & "-" & _
-        Right("0" & Month(d), 2) & "-" & _
-        Right("0" & Day(d), 2)
-End Function
 
 Function FormatDateTime2(d)
     FormatDateTime2 = Year(d) & "-" & _

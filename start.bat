@@ -82,7 +82,7 @@ if not exist "%BASE_DIR%\.env" (
 
 :: ── Read port from .env ──
 set SERVER_PORT=3002
-for /f "usebackq tokens=1,* delims==" %%a in ("%BASE_DIR%\.env") do (
+for /f "usebackq eol=# tokens=1,* delims==" %%a in ("%BASE_DIR%\.env") do (
     if "%%a"=="SERVER_PORT" set SERVER_PORT=%%b
 )
 

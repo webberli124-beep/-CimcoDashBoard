@@ -3,10 +3,13 @@ import path from "node:path";
 
 const LOGS_DIR = path.resolve(process.cwd(), "logs");
 
-function ensureLogsDir(): void {
+// Ensure logs directory exists once at startup
+try {
   if (!fs.existsSync(LOGS_DIR)) {
     fs.mkdirSync(LOGS_DIR, { recursive: true });
   }
+} catch {
+  // Will fall back to console-only logging
 }
 
 function getLogFile(): string {
@@ -45,13 +48,8 @@ function write(level: "INFO" | "WARN" | "ERROR", message: string, extra?: unknow
     process.stdout.write(line);
   }
 
-  // File output
-  try {
-    ensureLogsDir();
-    fs.appendFileSync(getLogFile(), line, "utf-8");
-  } catch {
-    // If file logging fails, we already wrote to console — don't crash
-  }
+  // File output (async — fire-and-forget)
+  fs.appendFile(getLogFile(), line, "utf-8", () => {});
 }
 
 export const log = {

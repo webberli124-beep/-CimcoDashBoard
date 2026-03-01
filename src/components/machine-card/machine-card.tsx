@@ -34,6 +34,9 @@ export const MachineCard = memo(function MachineCard({
   return (
     <div
       onClick={onClick}
+      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onClick?.(); } }}
+      role="button"
+      tabIndex={0}
       className="relative flex flex-col rounded-[14px] cursor-pointer transition-all duration-300 hover:scale-[1.02] overflow-hidden"
       style={{
         background: `linear-gradient(135deg, #1E293B 0%, ${sc.bg}22 100%)`,

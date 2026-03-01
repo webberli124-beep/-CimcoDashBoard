@@ -1,0 +1,12 @@
+node_modules
+dist
+server/dist
+_build
+install_package
+logs
+.env
+.git
+.github
+.claude
+*.zip
+*.log

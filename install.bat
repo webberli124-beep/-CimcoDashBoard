@@ -231,7 +231,7 @@ echo  │  Database Configuration (.env)                      │
 echo  │                                                     │
 
 :: Display current .env values (explicit key checks skip comments automatically)
-for /f "usebackq tokens=1,* delims==" %%a in ("%BASE_DIR%\.env") do (
+for /f "usebackq eol=# tokens=1,* delims==" %%a in ("%BASE_DIR%\.env") do (
     if "%%a"=="DB_HOST"     echo  │    DB_HOST     = %%b
     if "%%a"=="DB_PORT"     echo  │    DB_PORT     = %%b
     if "%%a"=="DB_USER"     echo  │    DB_USER     = %%b
@@ -321,7 +321,7 @@ echo    [OK] Server and frontend files verified
 echo.
 
 set "SERVER_PORT=3002"
-for /f "usebackq tokens=1,* delims==" %%a in ("%BASE_DIR%\.env") do (
+for /f "usebackq eol=# tokens=1,* delims==" %%a in ("%BASE_DIR%\.env") do (
     if "%%a"=="SERVER_PORT" set "SERVER_PORT=%%b"
 )
 

@@ -119,6 +119,9 @@ export function SummaryTable({
                   background: isNegDiff ? "rgba(239,68,68,0.05)" : "rgba(255,255,255,0.02)",
                 }}
                 onClick={() => onSelectMachine(m)}
+                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onSelectMachine(m); } }}
+                role="button"
+                tabIndex={0}
               >
                 <TableCell className="py-2.5">
                   <div className="font-mono text-[10px] text-slate-500">

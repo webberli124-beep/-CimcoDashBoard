@@ -59,6 +59,7 @@ function OptionGroup({
           <button
             key={opt}
             className="font-mono transition-colors"
+            aria-pressed={opt === value}
             style={{
               padding: "5px 10px",
               borderRadius: "6px",
@@ -170,6 +171,7 @@ export function SettingsPanel({
               return (
                 <button
                   key={s.name}
+                  aria-pressed={isActive}
                   className="flex justify-between rounded-lg mb-1.5 w-full text-left transition-colors"
                   style={{
                     padding: "8px 12px",
