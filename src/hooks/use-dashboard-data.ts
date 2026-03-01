@@ -13,21 +13,25 @@ export function useDashboardData(settings: DashboardSettings) {
 
   const dismissError = useCallback(() => setError(null), []);
 
-  const { shiftStart, shiftEnd, greenThreshold, yellowThreshold, refreshInterval } = settings;
+  const { shiftStart, shiftEnd, greenThreshold, yellowThreshold, refreshInterval, selectedDate } = settings;
 
-  const loadData = useCallback(async (): Promise<void> => {
+  const loadData = useCallback(async (signal?: AbortSignal): Promise<void> => {
     try {
       const data = await fetchDashboardData({
         shiftStart,
         shiftEnd,
         greenThreshold,
         yellowThreshold,
+        date: selectedDate,
+        signal,
       });
 
+      if (signal?.aborted) return;
       setRawMachines(data);
       setLastUpdated(new Date());
       setError(null);
     } catch (err) {
+      if (signal?.aborted) return;
       if (err instanceof ApiError) {
         setError(err.detail);
       } else {
@@ -38,15 +42,16 @@ export function useDashboardData(settings: DashboardSettings) {
         });
       }
       console.error("Failed to load dashboard data:", err);
-      throw err; // Re-throw so callers (e.g. manual refresh button) can detect failure
     } finally {
-      setLoading(false);
+      if (!signal?.aborted) setLoading(false);
     }
-  }, [shiftStart, shiftEnd, greenThreshold, yellowThreshold]);
+  }, [shiftStart, shiftEnd, greenThreshold, yellowThreshold, selectedDate]);
 
-  // Fetch on mount and when relevant settings change
+  // Fetch on mount and when relevant settings change; abort stale requests
   useEffect(() => {
-    loadData().catch(() => {});
+    const ac = new AbortController();
+    loadData(ac.signal).catch(() => {});
+    return () => ac.abort();
   }, [loadData]);
 
   // Auto-refresh interval — use ref so interval only resets when refreshInterval changes
@@ -88,5 +93,8 @@ export function useDashboardData(settings: DashboardSettings) {
     return { total: machines.length, onTrack, warning, behind, totalGap };
   }, [machines]);
 
-  return { machines, stats, lastUpdated, loading, error, dismissError, refresh: loadData };
+  // Manual refresh (no signal — not cancelled by settings changes)
+  const refresh = useCallback(() => loadData(), [loadData]);
+
+  return { machines, stats, lastUpdated, loading, error, dismissError, refresh };
 }

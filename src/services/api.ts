@@ -55,6 +55,8 @@ interface FetchParams {
   shiftEnd: string;
   greenThreshold: number;
   yellowThreshold: number;
+  date?: string;
+  signal?: AbortSignal;
 }
 
 /**
@@ -74,11 +76,15 @@ export async function fetchDashboardData(
     greenThreshold: String(params.greenThreshold),
     yellowThreshold: String(params.yellowThreshold),
   });
+  if (params.date) {
+    query.set("date", params.date);
+  }
 
   let res: Response;
   try {
-    res = await fetch(`${API_BASE}/dashboard?${query}`);
-  } catch {
+    res = await fetch(`${API_BASE}/dashboard?${query}`, params.signal ? { signal: params.signal } : undefined);
+  } catch (err) {
+    if (err instanceof DOMException && err.name === "AbortError") throw err;
     throw new ApiError({
       code: "NETWORK_ERROR",
       message: "Cannot reach the dashboard server",

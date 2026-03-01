@@ -94,6 +94,7 @@ interface HourlyRow extends RowDataPacket {
  *   - shiftEnd: shift end time HH:MM (default "16:00")
  *   - greenThreshold: percentage (default 100)
  *   - yellowThreshold: percentage (default 80)
+ *   - date: optional YYYY-MM-DD to query a specific date (default: today)
  *
  * Returns: MachineData[]
  */
@@ -120,41 +121,81 @@ router.get("/dashboard", async (req, res) => {
     const greenThreshold = Number.isFinite(greenRaw) ? greenRaw : 100;
     const yellowThreshold = Number.isFinite(yellowRaw) ? yellowRaw : 80;
 
-    // Calculate today's shift boundaries as unix timestamps
-    const now = new Date();
+    // Optional date parameter (YYYY-MM-DD)
+    const dateParam = req.query.date as string | undefined;
+    const dateRe = /^\d{4}-\d{2}-\d{2}$/;
+    if (dateParam && !dateRe.test(dateParam)) {
+      res.status(400).json({
+        error: {
+          code: "INVALID_PARAMS",
+          message: "date must be in YYYY-MM-DD format",
+          suggestion: 'Use format like "2026-03-01".',
+        },
+      });
+      return;
+    }
+
+    // Calculate shift boundaries as unix timestamps
+    const baseDate = dateParam ? new Date(dateParam + "T00:00:00") : new Date();
     const [startH, startM] = shiftStart.split(":").map(Number);
     const [endH, endM] = shiftEnd.split(":").map(Number);
 
-    const shiftStartDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), startH, startM, 0);
-    let shiftEndDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), endH, endM, 0);
+    const shiftStartDate = new Date(baseDate.getFullYear(), baseDate.getMonth(), baseDate.getDate(), startH, startM, 0);
+    let shiftEndDate = new Date(baseDate.getFullYear(), baseDate.getMonth(), baseDate.getDate(), endH, endM, 0);
 
     // Handle cross-midnight shifts (e.g. 22:00 – 06:00): push end to next day
     if (shiftEndDate <= shiftStartDate) {
       shiftEndDate = new Date(shiftEndDate.getTime() + 24 * 60 * 60 * 1000);
-      // If past midnight but before shift end, the shift started yesterday
-      const nowMinutes = now.getHours() * 60 + now.getMinutes();
-      const endMinutes = endH * 60 + endM;
-      if (nowMinutes < endMinutes) {
-        shiftStartDate.setDate(shiftStartDate.getDate() - 1);
-        shiftEndDate.setDate(shiftEndDate.getDate() - 1);
+      // When no date param: if past midnight but before shift end, shift started yesterday
+      if (!dateParam) {
+        const now = new Date();
+        const nowMinutes = now.getHours() * 60 + now.getMinutes();
+        const endMinutes = endH * 60 + endM;
+        if (nowMinutes < endMinutes) {
+          shiftStartDate.setDate(shiftStartDate.getDate() - 1);
+          shiftEndDate.setDate(shiftEndDate.getDate() - 1);
+        }
       }
     }
 
     const startUnix = Math.floor(shiftStartDate.getTime() / 1000);
     const endUnix = Math.floor(shiftEndDate.getTime() / 1000);
 
-    // Query all records for today's shift
+    // Query all records for the shift
     // starttime is stored as a numeric string (unix timestamp).
     // Direct string comparison works for unix timestamps of the same digit length.
     // For optimal performance, consider adding a numeric index column.
-    const [rows] = await getPool().query<HourlyRow[]>(
-      `SELECT starttime, portid, column1, column2, column3
+    const sql = `SELECT starttime, portid, column1, column2, column3
        FROM valtb_hourly_dashboard
        WHERE starttime >= ?
          AND starttime < ?
-       ORDER BY portid, starttime`,
-      [String(startUnix), String(endUnix)]
-    );
+       ORDER BY portid, starttime`;
+    const sqlParams = [String(startUnix), String(endUnix)];
+
+    let rows: HourlyRow[];
+    try {
+      const [result] = await getPool().query<HourlyRow[]>(sql, sqlParams);
+      rows = result;
+    } catch (dbErr) {
+      const detail = classifyDbError(dbErr);
+      log.error("Dashboard DB query failed", {
+        code: detail.code,
+        message: detail.message,
+        raw: (dbErr as Error).message,
+        sql,
+        params: sqlParams,
+        date: dateParam ?? "today",
+        shift: `${shiftStart}-${shiftEnd}`,
+      });
+      res.status(detail.httpStatus).json({
+        error: {
+          code: detail.code,
+          message: detail.message,
+          suggestion: detail.suggestion,
+        },
+      });
+      return;
+    }
 
     // Group rows by portid
     const machineMap = new Map<string, HourlyRow[]>();
@@ -217,7 +258,12 @@ router.get("/dashboard", async (req, res) => {
     res.json(machines);
   } catch (err) {
     const detail = classifyDbError(err);
-    log.error("Dashboard API error", { code: detail.code, message: detail.message, raw: (err as Error).message });
+    log.error("Dashboard API error", {
+      code: detail.code,
+      message: detail.message,
+      raw: (err as Error).message,
+      query: req.query,
+    });
     res.status(detail.httpStatus).json({
       error: {
         code: detail.code,

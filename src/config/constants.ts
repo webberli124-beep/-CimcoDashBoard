@@ -1,4 +1,4 @@
-import type { MachineStatus } from "@/types/dashboard";
+import type { MachineStatus, DashboardSettings } from "@/types/dashboard";
 
 export const STATUS_COLORS: Record<
   MachineStatus,
@@ -30,7 +30,16 @@ export const STATUS_SORT_WEIGHT: Record<MachineStatus, number> = {
   green: 2,
 };
 
-export const DEFAULT_SETTINGS = {
+/** Return today's date as YYYY-MM-DD in the local timezone. */
+export function getLocalToday(): string {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+export const DEFAULT_SETTINGS: DashboardSettings = {
   refreshInterval: 30,
   greenThreshold: 100,
   yellowThreshold: 80,
@@ -38,7 +47,8 @@ export const DEFAULT_SETTINGS = {
   shiftEnd: "16:00",
   shiftName: "Day Shift",
   tvMode: false,
-} as const;
+  selectedDate: getLocalToday(),
+};
 
 export const REFRESH_OPTIONS = [15, 30, 60, 120] as const;
 export const GREEN_THRESHOLD_OPTIONS = [90, 95, 100] as const;

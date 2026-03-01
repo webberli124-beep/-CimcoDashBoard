@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from "react";
 import type { DashboardSettings } from "@/types/dashboard";
-import { DEFAULT_SETTINGS } from "@/config/constants";
+import { DEFAULT_SETTINGS, getLocalToday } from "@/config/constants";
 
 const STORAGE_KEY = "cimco-dashboard-settings";
 
@@ -41,7 +41,7 @@ export function useSettings() {
   );
 
   const resetSettings = useCallback(() => {
-    setSettingsState({ ...DEFAULT_SETTINGS });
+    setSettingsState({ ...DEFAULT_SETTINGS, selectedDate: getLocalToday() });
   }, []);
 
   return { settings, updateSettings, resetSettings };

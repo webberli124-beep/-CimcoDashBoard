@@ -1,7 +1,8 @@
-import { Settings } from "lucide-react";
+import { Settings, CalendarDays } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { DashboardStats } from "@/types/dashboard";
 import { useClock } from "@/hooks/use-clock";
+import { getLocalToday } from "@/config/constants";
 
 function ClockSection({ lastUpdated, refreshInterval, isTV }: { lastUpdated: Date; refreshInterval: number; isTV: boolean }) {
   const { time } = useClock();
@@ -21,10 +22,18 @@ function ClockSection({ lastUpdated, refreshInterval, isTV }: { lastUpdated: Dat
   );
 }
 
+function formatSelectedDate(dateStr: string): string {
+  if (!dateStr) return "Today";
+  const d = new Date(dateStr + "T00:00:00");
+  if (isNaN(d.getTime())) return "Today";
+  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  return `${months[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()} (${days[d.getDay()]})`;
+}
+
 interface StatusBarProps {
   stats: DashboardStats;
-  shiftName: string;
-  shiftTime: string;
+  selectedDate: string;
   lastUpdated: Date;
   refreshInterval: number;
   isTV?: boolean;
@@ -33,13 +42,14 @@ interface StatusBarProps {
 
 export function StatusBar({
   stats,
-  shiftName,
-  shiftTime,
+  selectedDate,
   lastUpdated,
   refreshInterval,
   isTV = false,
   onOpenSettings,
 }: StatusBarProps) {
+
+  const isToday = selectedDate === getLocalToday();
 
   const badges = [
     { label: "On Track", count: stats.onTrack, color: "#10B981" },
@@ -57,7 +67,7 @@ export function StatusBar({
           padding: isTV ? "18px 28px" : "10px 16px",
         }}
       >
-        {/* Left: title + shift info */}
+        {/* Left: title + date badge */}
         <div className="flex items-center gap-3 shrink-0">
           <div>
             <div
@@ -70,13 +80,34 @@ export function StatusBar({
               CIMCO MDC Dashboard
             </div>
             <div
-              style={{
-                fontSize: isTV ? "13px" : "11px",
-                color: "#64748B",
-                marginTop: "1px",
-              }}
+              className="flex items-center gap-1.5"
+              style={{ marginTop: "2px" }}
             >
-              {shiftName} · {shiftTime}
+              <CalendarDays size={isTV ? 14 : 12} style={{ color: isToday ? "#64748B" : "#F59E0B" }} />
+              <span
+                className="font-mono font-semibold"
+                style={{
+                  fontSize: isTV ? "13px" : "11px",
+                  color: isToday ? "#94A3B8" : "#FDE68A",
+                }}
+              >
+                {formatSelectedDate(selectedDate)}
+              </span>
+              {!isToday && (
+                <span
+                  className="font-semibold"
+                  style={{
+                    fontSize: "9px",
+                    padding: "1px 5px",
+                    borderRadius: "4px",
+                    background: "rgba(245,158,11,0.2)",
+                    color: "#F59E0B",
+                    border: "1px solid rgba(245,158,11,0.3)",
+                  }}
+                >
+                  HISTORY
+                </span>
+              )}
             </div>
           </div>
         </div>

@@ -32,15 +32,12 @@ export default function DashboardPage() {
     [selectedMachineId, machines]
   );
 
-  const shiftTime = useMemo(() => `${settings.shiftStart} – ${settings.shiftEnd}`, [settings.shiftStart, settings.shiftEnd]);
-
   return (
     <DashboardLayout>
       {/* MODULE 1: Status Bar */}
       <StatusBar
         stats={stats}
-        shiftName={settings.shiftName}
-        shiftTime={shiftTime}
+        selectedDate={settings.selectedDate}
         lastUpdated={lastUpdated}
         refreshInterval={settings.refreshInterval}
         isTV={settings.tvMode}
@@ -50,10 +47,10 @@ export default function DashboardPage() {
       {/* Error Banner */}
       {error && <ErrorBanner error={error} onDismiss={dismissError} />}
 
-      {/* View Toggle */}
+      {/* View Toggle + Shift Label */}
       <div
         style={{ padding: settings.tvMode ? "0 32px 8px" : "0 16px 6px" }}
-        className="flex gap-0.5"
+        className="flex items-center gap-2"
       >
         <div className="flex gap-0.5 rounded-lg p-0.5" style={{ background: "#1E293B" }}>
           {[
@@ -78,6 +75,22 @@ export default function DashboardPage() {
             </button>
           ))}
         </div>
+        <span
+          className="font-semibold"
+          style={{
+            padding: "5px 12px",
+            borderRadius: "6px",
+            fontSize: "12px",
+            background: "rgba(79,70,229,0.15)",
+            color: "#A5B4FC",
+            border: "1px solid rgba(79,70,229,0.3)",
+          }}
+        >
+          {settings.shiftName}
+          <span className="font-mono ml-1.5" style={{ color: "#818CF8", fontSize: "11px" }}>
+            {settings.shiftStart} – {settings.shiftEnd}
+          </span>
+        </span>
       </div>
 
       {/* MODULE 2/4: Main Content */}

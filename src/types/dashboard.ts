@@ -41,6 +41,7 @@ export interface DashboardSettings {
   shiftEnd: string;        // "16:00"
   shiftName: string;       // "Day Shift"
   tvMode: boolean;
+  selectedDate: string;    // "YYYY-MM-DD"
 }
 
 export interface DashboardStats {
