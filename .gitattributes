@@ -1,0 +1,22 @@
+# Auto-detect text files and normalize line endings
+* text=auto
+
+# Force LF for source code (cross-platform consistency)
+*.ts text eol=lf
+*.tsx text eol=lf
+*.js text eol=lf
+*.json text eol=lf
+*.css text eol=lf
+*.html text eol=lf
+*.md text eol=lf
+*.yml text eol=lf
+*.sql text eol=lf
+
+# Force CRLF for Windows scripts
+*.bat text eol=crlf
+*.vbs text eol=crlf
+
+# Binary files
+*.zip binary
+*.png binary
+*.ico binary
