@@ -26,9 +26,20 @@ export default function DashboardPage() {
 
   useEffect(() => {
     let cancelled = false;
-    fetchConfig().then((cfg) => { if (!cancelled) setConfig(cfg); });
+    fetchConfig().then((cfg) => {
+      if (cancelled) return;
+      setConfig(cfg);
+      // Sync shift times from server config → localStorage settings
+      if (cfg?.shifts?.length) {
+        const match = cfg.shifts.find((s: { name: string }) => s.name === settings.shiftName);
+        const shift = match || cfg.shifts[0];
+        if (shift.start !== settings.shiftStart || shift.end !== settings.shiftEnd || shift.name !== settings.shiftName) {
+          updateSettings({ shiftName: shift.name, shiftStart: shift.start, shiftEnd: shift.end });
+        }
+      }
+    });
     return () => { cancelled = true; };
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Machine for the hourly table selector
   const selectedMachine = useMemo(

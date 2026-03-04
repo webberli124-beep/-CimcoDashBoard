@@ -1,6 +1,6 @@
 import type { MachineStatus, DashboardSettings } from "@/types/dashboard";
 
-export const APP_VERSION = "v1.0.1";
+export const APP_VERSION = "v1.0.1a";
 
 export const STATUS_COLORS: Record<
   MachineStatus,
@@ -60,7 +60,7 @@ export const DEFAULT_SETTINGS: DashboardSettings = {
   greenThreshold: 100,
   yellowThreshold: 80,
   shiftStart: "08:00",
-  shiftEnd: "16:00",
+  shiftEnd: "20:00",
   shiftName: "Day Shift",
   tvMode: false,
   selectedDate: getLocalToday(),

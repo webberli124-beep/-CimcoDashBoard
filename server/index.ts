@@ -157,8 +157,8 @@ function loadShiftSchedules(): Array<{ name: string; start: string; end: string 
     }
   }
   return [
-    { name: "Day Shift", start: "08:00", end: "19:00" },
-    { name: "Night Shift", start: "19:00", end: "08:00" },
+    { name: "Day Shift", start: "08:00", end: "20:00" },
+    { name: "Night Shift", start: "20:00", end: "08:00" },
   ];
 }
 
