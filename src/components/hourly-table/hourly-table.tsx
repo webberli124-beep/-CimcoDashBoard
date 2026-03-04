@@ -66,6 +66,30 @@ export function HourlyTable({
     return STATUS_COLORS[st].text;
   }
 
+  /** Gradient intensity style for TOTAL row — thresholds: 5%, 10%, 20%, 50% */
+  function intensityStyle(diff: number, target: number): React.CSSProperties {
+    if (target <= 0) return { color: "#94A3B8" };
+    const pctDev = Math.abs(diff / target) * 100;
+    const pos = diff >= 0;
+
+    // level 0 = <5%, 1 = 5-10%, 2 = 10-20%, 3 = 20-50%, 4 = ≥50%
+    const level = pctDev < 5 ? 0 : pctDev < 10 ? 1 : pctDev < 20 ? 2 : pctDev < 50 ? 3 : 4;
+
+    const greenColors = ["#6EE7B7", "#34D399", "#10B981", "#059669", "#047857"];
+    const redColors   = ["#FCA5A5", "#F87171", "#EF4444", "#DC2626", "#B91C1C"];
+    const base = pos ? "16,185,129" : "239,68,68";
+    const colors = pos ? greenColors : redColors;
+    const glowAlpha = [0, 0.15, 0.25, 0.4, 0.55];
+
+    const glowRadius = [0, 4, 8, 14, 20];
+    return {
+      color: colors[level],
+      textShadow: level > 0
+        ? `0 0 ${glowRadius[level]}px rgba(${base},${glowAlpha[level]}), 0 0 ${glowRadius[level] * 2}px rgba(${base},${glowAlpha[level] * 0.5})`
+        : undefined,
+    };
+  }
+
   return (
     <div>
       {/* Machine header */}
@@ -184,13 +208,13 @@ export function HourlyTable({
               </TableCell>
               <TableCell
                 className={`${cellPad} font-mono font-semibold ${fontSize}`}
-                style={{ color: diffColor(totals.diff) }}
+                style={intensityStyle(totals.diff, totals.target)}
               >
                 {totals.diff > 0 ? `+${totals.diff}` : totals.diff}
               </TableCell>
               <TableCell
                 className={`${cellPad} font-mono font-semibold ${fontSize}`}
-                style={{ color: pctColor(totals.actual, totals.target) }}
+                style={intensityStyle(totals.diff, totals.target)}
               >
                 {totals.pct}%
               </TableCell>
