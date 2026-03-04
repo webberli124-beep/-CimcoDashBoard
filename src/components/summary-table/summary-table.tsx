@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/table";
 import { ArrowUpDown } from "lucide-react";
 import type { MachineData } from "@/types/dashboard";
-import { STATUS_COLORS, STATUS_SORT_WEIGHT, getPct, getStatus } from "@/config/constants";
+import { STATUS_COLORS, STATUS_SORT_WEIGHT, STATUS_LABELS, getPct, getStatus } from "@/config/constants";
 import { DeviationBadge } from "@/components/machine-card/deviation-badge";
 
 interface SummaryTableProps {
@@ -181,13 +181,7 @@ export function SummaryTable({
                         background: sc.border,
                       }}
                     />
-                    {m.status === "green"
-                      ? "On Track"
-                      : m.status === "yellow"
-                        ? "Minor"
-                        : m.status === "orange"
-                          ? "Caution"
-                          : "Behind"}
+                    {STATUS_LABELS[m.status]}
                   </div>
                 </TableCell>
               </TableRow>

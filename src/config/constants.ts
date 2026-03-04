@@ -30,6 +30,13 @@ export const STATUS_COLORS: Record<
   },
 };
 
+export const STATUS_LABELS: Record<MachineStatus, string> = {
+  green: "On Track",
+  yellow: "Minor",
+  orange: "Caution",
+  red: "Behind",
+};
+
 export const STATUS_SORT_WEIGHT: Record<MachineStatus, number> = {
   red: 0,
   orange: 1,

@@ -3,7 +3,7 @@ import ReactECharts from "echarts-for-react";
 import type { HourlySlot } from "@/types/dashboard";
 
 function escapeHtml(str: string): string {
-  return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
 }
 
 interface HourlyBarChartProps {
@@ -22,11 +22,12 @@ export function HourlyBarChart({
     const targets = slots.map((s) => s.target);
     const actuals = slots.map((s) => s.actual);
 
-    // Color actual bars by status using configured thresholds
+    // Color actual bars by 4-level status (mirrors getStatus() in constants.ts)
     const actualColors = slots.map((s) => {
       const pct = s.target > 0 ? (s.actual / s.target) * 100 : 100;
       if (pct >= greenThreshold) return "#10B981";
-      if (pct >= yellowThreshold) return "#F59E0B";
+      if (pct >= greenThreshold - 5) return "#EAB308";
+      if (pct >= yellowThreshold) return "#F97316";
       return "#EF4444";
     });
 

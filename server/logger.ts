@@ -48,8 +48,10 @@ function write(level: "INFO" | "WARN" | "ERROR", message: string, extra?: unknow
     process.stdout.write(line);
   }
 
-  // File output (async — fire-and-forget)
-  fs.appendFile(getLogFile(), line, "utf-8", () => {});
+  // File output (async)
+  fs.appendFile(getLogFile(), line, "utf-8", (err) => {
+    if (err) process.stderr.write(`[logger] Failed to write log file: ${err.message}\n`);
+  });
 }
 
 export const log = {

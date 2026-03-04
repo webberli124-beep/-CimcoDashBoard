@@ -96,7 +96,7 @@ export async function fetchDashboardData(
     // Try to parse structured error from server
     try {
       const body = await res.json();
-      if (body?.error?.code) {
+      if (body?.error?.code && body.error.message && body.error.suggestion) {
         throw new ApiError(body.error as ApiErrorDetail);
       }
     } catch (e) {

@@ -2,7 +2,7 @@ import { Settings, CalendarDays } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { DashboardStats } from "@/types/dashboard";
 import { useClock } from "@/hooks/use-clock";
-import { getLocalToday } from "@/config/constants";
+import { getLocalToday, STATUS_LABELS } from "@/config/constants";
 
 function ClockSection({ lastUpdated, refreshInterval, isTV }: { lastUpdated: Date; refreshInterval: number; isTV: boolean }) {
   const { time } = useClock();
@@ -52,10 +52,10 @@ export function StatusBar({
   const isToday = selectedDate === getLocalToday();
 
   const badges = [
-    { label: "On Track", count: stats.onTrack, color: "#10B981" },
-    { label: "Minor",    count: stats.warning,  color: "#EAB308" },
-    { label: "Caution",  count: stats.caution,  color: "#F97316" },
-    { label: "Behind",   count: stats.behind,   color: "#EF4444" },
+    { label: STATUS_LABELS.green,  count: stats.onTrack, color: "#10B981" },
+    { label: STATUS_LABELS.yellow, count: stats.warning,  color: "#EAB308" },
+    { label: STATUS_LABELS.orange, count: stats.caution,  color: "#F97316" },
+    { label: STATUS_LABELS.red,    count: stats.behind,   color: "#EF4444" },
   ];
 
   return (
