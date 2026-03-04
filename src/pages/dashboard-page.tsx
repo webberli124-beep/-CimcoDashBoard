@@ -10,13 +10,17 @@ import { DetailPanel } from "@/components/detail-panel/detail-panel";
 import { SummaryTable } from "@/components/summary-table/summary-table";
 import { SettingsPanel } from "@/components/settings-panel/settings-panel";
 import { ErrorBanner } from "@/components/error-banner/error-banner";
+import { HourlyTable } from "@/components/hourly-table/hourly-table";
+import { ActionBar } from "@/components/action-bar/action-bar";
+import type { ViewMode } from "@/components/action-bar/action-bar";
 
 export default function DashboardPage() {
   const { settings, updateSettings, resetSettings } = useSettings();
   const { machines, stats, lastUpdated, loading, error, dismissError, refresh } = useDashboardData(settings);
 
-  const [view, setView] = useState<"cards" | "table">("cards");
+  const [view, setView] = useState<ViewMode>("hourly");
   const [selectedMachineId, setSelectedMachineId] = useState<string | null>(null);
+  const [detailMachineId, setDetailMachineId] = useState<string | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [config, setConfig] = useState<AppConfig | null>(null);
 
@@ -26,10 +30,16 @@ export default function DashboardPage() {
     return () => { cancelled = true; };
   }, []);
 
-  // Always derive selectedMachine from latest machines data to avoid stale state
+  // Machine for the hourly table selector
   const selectedMachine = useMemo(
     () => (selectedMachineId ? machines.find((m) => m.id === selectedMachineId) ?? null : null),
     [selectedMachineId, machines]
+  );
+
+  // Machine for the detail panel (cards/table click)
+  const detailMachine = useMemo(
+    () => (detailMachineId ? machines.find((m) => m.id === detailMachineId) ?? null : null),
+    [detailMachineId, machines]
   );
 
   return (
@@ -47,53 +57,23 @@ export default function DashboardPage() {
       {/* Error Banner */}
       {error && <ErrorBanner error={error} onDismiss={dismissError} />}
 
-      {/* View Toggle + Shift Label */}
-      <div
-        style={{ padding: settings.tvMode ? "0 32px 8px" : "0 16px 6px" }}
-        className="flex items-center gap-2"
-      >
-        <div className="flex gap-0.5 rounded-lg p-0.5" style={{ background: "#1E293B" }}>
-          {[
-            { key: "cards" as const, label: "Grid Cards" },
-            { key: "table" as const, label: "Table View" },
-          ].map(({ key, label }) => (
-            <button
-              key={key}
-              onClick={() => setView(key)}
-              className="transition-colors font-semibold"
-              style={{
-                padding: "5px 12px",
-                borderRadius: "6px",
-                border: "none",
-                cursor: "pointer",
-                fontSize: "12px",
-                background: view === key ? "#334155" : "transparent",
-                color: view === key ? "#E2E8F0" : "#64748B",
-              }}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-        <span
-          className="font-semibold"
-          style={{
-            padding: "5px 12px",
-            borderRadius: "6px",
-            fontSize: "12px",
-            background: "rgba(79,70,229,0.15)",
-            color: "#A5B4FC",
-            border: "1px solid rgba(79,70,229,0.3)",
-          }}
-        >
-          {settings.shiftName}
-          <span className="font-mono ml-1.5" style={{ color: "#818CF8", fontSize: "11px" }}>
-            {settings.shiftStart} – {settings.shiftEnd}
-          </span>
-        </span>
-      </div>
+      {/* ACTION BAR: Machine selector + Date + View toggle + Shift */}
+      <ActionBar
+        view={view}
+        onViewChange={setView}
+        machines={machines}
+        selectedMachineId={selectedMachineId}
+        onMachineChange={setSelectedMachineId}
+        selectedDate={settings.selectedDate}
+        onDateChange={(date) => updateSettings({ selectedDate: date })}
+        onRefresh={refresh}
+        isTV={settings.tvMode}
+        shiftName={settings.shiftName}
+        shiftStart={settings.shiftStart}
+        shiftEnd={settings.shiftEnd}
+      />
 
-      {/* MODULE 2/4: Main Content */}
+      {/* MAIN CONTENT: 3-way view routing */}
       <div style={{ padding: settings.tvMode ? "8px 32px 32px" : "6px 16px 16px" }}>
         {loading && machines.length === 0 ? (
           <div
@@ -109,33 +89,54 @@ export default function DashboardPage() {
           >
             No machine data available for the current shift.
           </div>
+        ) : view === "hourly" ? (
+          selectedMachine ? (
+            <HourlyTable
+              machine={selectedMachine}
+              greenThreshold={settings.greenThreshold}
+              yellowThreshold={settings.yellowThreshold}
+              isTV={settings.tvMode}
+            />
+          ) : (
+            <div className="space-y-6">
+              {machines.map((m) => (
+                <HourlyTable
+                  key={m.id}
+                  machine={m}
+                  greenThreshold={settings.greenThreshold}
+                  yellowThreshold={settings.yellowThreshold}
+                  isTV={settings.tvMode}
+                />
+              ))}
+            </div>
+          )
         ) : view === "cards" ? (
           <MachineGrid
             machines={machines}
             isTV={settings.tvMode}
             yellowThreshold={settings.yellowThreshold}
             greenThreshold={settings.greenThreshold}
-            onSelectMachine={(m) => setSelectedMachineId(m.id)}
+            onSelectMachine={(m) => setDetailMachineId(m.id)}
           />
         ) : (
           <SummaryTable
             machines={machines}
             greenThreshold={settings.greenThreshold}
             yellowThreshold={settings.yellowThreshold}
-            onSelectMachine={(m) => setSelectedMachineId(m.id)}
+            onSelectMachine={(m) => setDetailMachineId(m.id)}
           />
         )}
       </div>
 
-      {/* MODULE 3: Detail Panel */}
+      {/* Detail Panel (for cards/table views) */}
       <DetailPanel
-        machine={selectedMachine}
+        machine={detailMachine}
         greenThreshold={settings.greenThreshold}
         yellowThreshold={settings.yellowThreshold}
-        onClose={() => setSelectedMachineId(null)}
+        onClose={() => setDetailMachineId(null)}
       />
 
-      {/* MODULE 5: Settings Panel */}
+      {/* Settings Panel */}
       <SettingsPanel
         open={settingsOpen}
         onClose={() => setSettingsOpen(false)}

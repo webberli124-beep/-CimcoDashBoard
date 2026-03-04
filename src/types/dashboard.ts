@@ -16,7 +16,7 @@ export interface HourlySlot {
   percentage: number; // (actual / target) * 100
 }
 
-export type MachineStatus = "green" | "yellow" | "red";
+export type MachineStatus = "green" | "yellow" | "orange" | "red";
 
 export interface MachineData {
   id: string;
@@ -48,6 +48,7 @@ export interface DashboardStats {
   total: number;
   onTrack: number;
   warning: number;
+  caution: number;
   behind: number;
   totalGap: number;
 }

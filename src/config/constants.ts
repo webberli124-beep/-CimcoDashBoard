@@ -11,10 +11,16 @@ export const STATUS_COLORS: Record<
     glow: "0 0 12px rgba(16,185,129,0.3)",
   },
   yellow: {
-    bg: "#78350F",
-    border: "#F59E0B",
-    text: "#FDE68A",
-    glow: "0 0 12px rgba(245,158,11,0.3)",
+    bg: "#422006",
+    border: "#EAB308",
+    text: "#FEF08A",
+    glow: "0 0 12px rgba(234,179,8,0.3)",
+  },
+  orange: {
+    bg: "#431407",
+    border: "#F97316",
+    text: "#FDBA74",
+    glow: "0 0 12px rgba(249,115,22,0.3)",
   },
   red: {
     bg: "#7F1D1D",
@@ -26,8 +32,9 @@ export const STATUS_COLORS: Record<
 
 export const STATUS_SORT_WEIGHT: Record<MachineStatus, number> = {
   red: 0,
-  yellow: 1,
-  green: 2,
+  orange: 1,
+  yellow: 2,
+  green: 3,
 };
 
 /** Return today's date as YYYY-MM-DD in the local timezone. */
@@ -63,7 +70,10 @@ export function getStatus(
   if (target <= 0) return "green";
   const pct = (actual / target) * 100;
   if (pct >= greenThreshold) return "green";
-  if (pct >= yellowThreshold) return "yellow";
+  // within 5% below green threshold → yellow (slight deficit)
+  if (pct >= greenThreshold - 5) return "yellow";
+  // above red boundary → orange (moderate deficit)
+  if (pct >= yellowThreshold) return "orange";
   return "red";
 }
 

@@ -184,8 +184,10 @@ export function SummaryTable({
                     {m.status === "green"
                       ? "On Track"
                       : m.status === "yellow"
-                        ? "Warning"
-                        : "Behind"}
+                        ? "Minor"
+                        : m.status === "orange"
+                          ? "Caution"
+                          : "Behind"}
                   </div>
                 </TableCell>
               </TableRow>

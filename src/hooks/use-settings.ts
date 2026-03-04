@@ -30,7 +30,11 @@ export function useSettings() {
   const [settings, setSettingsState] = useState<DashboardSettings>(loadSettings);
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+    } catch {
+      // Quota exceeded or private browsing — settings won't persist
+    }
   }, [settings]);
 
   const updateSettings = useCallback(

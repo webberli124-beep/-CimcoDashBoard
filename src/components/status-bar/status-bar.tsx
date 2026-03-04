@@ -53,8 +53,9 @@ export function StatusBar({
 
   const badges = [
     { label: "On Track", count: stats.onTrack, color: "#10B981" },
-    { label: "Warning", count: stats.warning, color: "#F59E0B" },
-    { label: "Behind", count: stats.behind, color: "#EF4444" },
+    { label: "Minor",    count: stats.warning,  color: "#EAB308" },
+    { label: "Caution",  count: stats.caution,  color: "#F97316" },
+    { label: "Behind",   count: stats.behind,   color: "#EF4444" },
   ];
 
   return (

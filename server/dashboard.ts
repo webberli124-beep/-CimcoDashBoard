@@ -57,22 +57,25 @@ function getMachineId(portid: string): string {
   return `M-${portid.padStart(3, "0")}`;
 }
 
-type MachineStatus = "green" | "yellow" | "red";
+type MachineStatus = "green" | "yellow" | "orange" | "red";
 
 // Mirrors frontend getStatus() — kept in sync manually since
 // server (Node/Express) and client (Vite/React) use separate module systems.
+// 4-level: green ≥ greenThreshold, yellow ≥ greenThreshold-5, orange ≥ yellowThreshold, red < yellowThreshold
 function getStatus(actual: number, target: number, greenThreshold = 100, yellowThreshold = 80): MachineStatus {
   if (target <= 0) return "green";
   const pct = (actual / target) * 100;
   if (pct >= greenThreshold) return "green";
-  if (pct >= yellowThreshold) return "yellow";
+  if (pct >= greenThreshold - 5) return "yellow";
+  if (pct >= yellowThreshold) return "orange";
   return "red";
 }
 
 const STATUS_SORT_WEIGHT: Record<MachineStatus, number> = {
   red: 0,
-  yellow: 1,
-  green: 2,
+  orange: 1,
+  yellow: 2,
+  green: 3,
 };
 
 interface HourlyRow extends RowDataPacket {
@@ -137,6 +140,16 @@ router.get("/dashboard", async (req, res) => {
 
     // Calculate shift boundaries as unix timestamps
     const baseDate = dateParam ? new Date(dateParam + "T00:00:00") : new Date();
+    if (isNaN(baseDate.getTime())) {
+      res.status(400).json({
+        error: {
+          code: "INVALID_PARAMS",
+          message: "date is not a valid calendar date",
+          suggestion: 'Use a real date like "2026-03-01", not "2026-02-30".',
+        },
+      });
+      return;
+    }
     const [startH, startM] = shiftStart.split(":").map(Number);
     const [endH, endM] = shiftEnd.split(":").map(Number);
 
