@@ -2,7 +2,7 @@ import { Settings, CalendarDays } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { DashboardStats } from "@/types/dashboard";
 import { useClock } from "@/hooks/use-clock";
-import { getLocalToday, STATUS_LABELS } from "@/config/constants";
+import { getLocalToday, STATUS_LABELS, APP_VERSION } from "@/config/constants";
 
 function ClockSection({ lastUpdated, refreshInterval, isTV }: { lastUpdated: Date; refreshInterval: number; isTV: boolean }) {
   const { time } = useClock();
@@ -79,6 +79,9 @@ export function StatusBar({
               }}
             >
               CIMCO MDC Dashboard
+              <span style={{ fontSize: "9px", color: "#475569", fontWeight: 500, marginLeft: "6px" }}>
+                {APP_VERSION}
+              </span>
             </div>
             <div
               className="flex items-center gap-1.5"
