@@ -51,4 +51,5 @@ export interface DashboardStats {
   caution: number;
   behind: number;
   totalGap: number;
+  efficiency: number; // (total cumulative actual / total cumulative target) * 100
 }

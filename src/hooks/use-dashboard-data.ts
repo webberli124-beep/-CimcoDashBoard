@@ -84,14 +84,18 @@ export function useDashboardData(settings: DashboardSettings) {
   // Compute stats in a single pass
   const stats: DashboardStats = useMemo(() => {
     let onTrack = 0, warning = 0, caution = 0, behind = 0, totalGap = 0;
+    let totalCumTarget = 0, totalCumActual = 0;
     for (const m of machines) {
       if (m.status === "green") onTrack++;
       else if (m.status === "yellow") warning++;
       else if (m.status === "orange") caution++;
       else behind++;
       totalGap += m.currentHour.difference;
+      totalCumTarget += m.cumulative.target;
+      totalCumActual += m.cumulative.actual;
     }
-    return { total: machines.length, onTrack, warning, caution, behind, totalGap };
+    const efficiency = totalCumTarget > 0 ? Math.round((totalCumActual / totalCumTarget) * 100) : 0;
+    return { total: machines.length, onTrack, warning, caution, behind, totalGap, efficiency };
   }, [machines]);
 
   // Manual refresh (no signal — not cancelled by settings changes)

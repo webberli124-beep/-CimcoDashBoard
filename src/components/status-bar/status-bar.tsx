@@ -113,7 +113,7 @@ export function StatusBar({
           </div>
         </div>
 
-        {/* Center: status badges + total gap */}
+        {/* Center: status badges + total gap + efficiency */}
         <div className="flex items-center gap-2 flex-wrap">
           {badges.map((s) => (
             <div
@@ -164,6 +164,30 @@ export function StatusBar({
               </span>
               <span style={{ fontSize: "10px", color: "#94A3B8" }}>
                 Total Gap
+              </span>
+            </div>
+          )}
+          {/* Production Efficiency */}
+          {stats.total > 0 && (
+            <div
+              className="flex items-center gap-1.5 rounded-[8px]"
+              style={{
+                padding: isTV ? "6px 14px" : "4px 10px",
+                background: "rgba(99,102,241,0.15)",
+                border: "1px solid rgba(99,102,241,0.33)",
+              }}
+            >
+              <span
+                className="font-mono font-extrabold"
+                style={{
+                  fontSize: isTV ? "22px" : "16px",
+                  color: "#818CF8",
+                }}
+              >
+                {stats.efficiency}%
+              </span>
+              <span style={{ fontSize: "10px", color: "#94A3B8" }}>
+                Efficiency
               </span>
             </div>
           )}
