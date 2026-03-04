@@ -17,6 +17,8 @@ function loadSettings(): DashboardSettings {
             (result as Record<string, unknown>)[key] = parsed[key];
           }
         }
+        // Always reset selectedDate to today on page load — never restore a stale past date
+        result.selectedDate = getLocalToday();
         return result;
       }
     }
