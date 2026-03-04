@@ -1,6 +1,6 @@
 import type { MachineStatus, DashboardSettings } from "@/types/dashboard";
 
-export const APP_VERSION = "v1.0.0.1a";
+export const APP_VERSION = "v1.0.1";
 
 export const STATUS_COLORS: Record<
   MachineStatus,

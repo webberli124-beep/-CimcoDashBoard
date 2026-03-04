@@ -210,9 +210,10 @@ router.get("/dashboard", async (req, res) => {
       return;
     }
 
-    // Group rows by portid
+    // Group rows by portid (skip null/undefined portid)
     const machineMap = new Map<string, HourlyRow[]>();
     for (const row of rows) {
+      if (row.portid == null) continue;
       const pid = String(row.portid);
       let bucket = machineMap.get(pid);
       if (!bucket) {
@@ -226,7 +227,8 @@ router.get("/dashboard", async (req, res) => {
     const allShiftHours: string[] = [];
     {
       const cursor = new Date(shiftStartDate);
-      while (cursor < shiftEndDate) {
+      const MAX_HOURS = 24; // safety limit
+      while (cursor < shiftEndDate && allShiftHours.length < MAX_HOURS) {
         allShiftHours.push(
           `${String(cursor.getHours()).padStart(2, "0")}:${String(cursor.getMinutes()).padStart(2, "0")}`
         );

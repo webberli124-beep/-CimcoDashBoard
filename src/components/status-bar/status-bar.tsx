@@ -79,7 +79,7 @@ export function StatusBar({
               }}
             >
               CIMCO MDC Dashboard
-              <span style={{ fontSize: "9px", color: "#475569", fontWeight: 500, marginLeft: "6px" }}>
+              <span style={{ fontSize: "11px", color: "#475569", fontWeight: 500, marginLeft: "6px" }}>
                 {APP_VERSION}
               </span>
             </div>
