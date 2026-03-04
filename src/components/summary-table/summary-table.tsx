@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   Table,
   TableBody,
   TableCell,
+  TableFooter,
   TableHead,
   TableHeader,
   TableRow,
@@ -57,6 +58,23 @@ export function SummaryTable({
     }
     return sortAsc ? cmp : -cmp;
   });
+
+  const totals = useMemo(() => {
+    let hTarget = 0, hActual = 0, cTarget = 0, cActual = 0;
+    for (const m of machines) {
+      hTarget += m.currentHour.target;
+      hActual += m.currentHour.actual;
+      cTarget += m.cumulative.target;
+      cActual += m.cumulative.actual;
+    }
+    return {
+      hTarget, hActual,
+      hDiff: hActual - hTarget,
+      hPct: hTarget > 0 ? Math.round((hActual / hTarget) * 100) : 0,
+      cTarget, cActual,
+      cPct: cTarget > 0 ? Math.round((cActual / cTarget) * 100) : 0,
+    };
+  }, [machines]);
 
   const SortButton = ({ col, children }: { col: SortKey; children: React.ReactNode }) => (
     <button
@@ -188,6 +206,35 @@ export function SummaryTable({
             );
           })}
         </TableBody>
+        <TableFooter>
+          <TableRow className="border-slate-700 hover:bg-transparent" style={{ background: "rgba(255,255,255,0.04)" }}>
+            <TableCell className="py-2.5 font-semibold text-slate-300 text-sm">
+              TOTAL ({machines.length} machines)
+            </TableCell>
+            <TableCell className="font-mono font-semibold text-slate-300 text-sm">
+              {totals.hTarget}
+            </TableCell>
+            <TableCell className="font-mono font-bold text-sm" style={{ color: totals.hDiff >= 0 ? "#10B981" : "#EF4444" }}>
+              {totals.hActual}
+            </TableCell>
+            <TableCell>
+              <DeviationBadge actual={totals.hActual} target={totals.hTarget} />
+            </TableCell>
+            <TableCell className="font-mono font-semibold text-sm" style={{ color: totals.hDiff >= 0 ? "#10B981" : "#EF4444" }}>
+              {totals.hPct}%
+            </TableCell>
+            <TableCell className="font-mono font-semibold text-slate-300 text-sm">
+              {totals.cTarget}
+            </TableCell>
+            <TableCell className="font-mono font-semibold text-slate-300 text-sm">
+              {totals.cActual}
+            </TableCell>
+            <TableCell className="font-mono font-semibold text-sm" style={{ color: totals.cPct >= 100 ? "#10B981" : "#EF4444" }}>
+              {totals.cPct}%
+            </TableCell>
+            <TableCell />
+          </TableRow>
+        </TableFooter>
       </Table>
     </div>
   );

@@ -222,23 +222,44 @@ router.get("/dashboard", async (req, res) => {
       bucket.push(row);
     }
 
+    // Generate all shift hours (e.g. 08:00,09:00,...,18:00 for 08:00-19:00)
+    const allShiftHours: string[] = [];
+    {
+      const cursor = new Date(shiftStartDate);
+      while (cursor < shiftEndDate) {
+        allShiftHours.push(
+          `${String(cursor.getHours()).padStart(2, "0")}:${String(cursor.getMinutes()).padStart(2, "0")}`
+        );
+        cursor.setTime(cursor.getTime() + 60 * 60 * 1000);
+      }
+    }
+
     // Transform into MachineData format
     const machines = Array.from(machineMap.entries()).map(([portid, records]) => {
-      const hourlySlots = records.map((r) => {
+      // Build a map of hour→slot from actual DB records
+      const slotMap = new Map<string, { hour: string; target: number; actual: number; difference: number; percentage: number }>();
+      for (const r of records) {
         const ts = new Date(Number(r.starttime) * 1000);
         const hour = `${String(ts.getHours()).padStart(2, "0")}:${String(ts.getMinutes()).padStart(2, "0")}`;
         const target = Number(r.column2);
         const actual = Number(r.column3);
-        return {
+        slotMap.set(hour, {
           hour,
           target,
           actual,
           difference: actual - target,
           percentage: target > 0 ? Math.round((actual / target) * 100) : 0,
-        };
-      });
+        });
+      }
 
-      const lastSlot = hourlySlots[hourlySlots.length - 1] || {
+      // Fill the full shift range — hours without data get zeros
+      const hourlySlots = allShiftHours.map((hour) =>
+        slotMap.get(hour) || { hour, target: 0, actual: 0, difference: 0, percentage: 0 }
+      );
+
+      // currentHour = last hour with actual data (skip future empty slots)
+      const lastDataSlot = [...hourlySlots].reverse().find((s) => s.target > 0 || s.actual > 0);
+      const lastSlot = lastDataSlot || {
         hour: "00:00", target: 0, actual: 0, difference: 0, percentage: 0,
       };
 
